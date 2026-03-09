@@ -1,0 +1,9 @@
+# n8n veritabanı ve ayarları
+n8n_data/
+
+# Go derlenmiş dosyaları
+app
+go-app/app
+
+# Çevresel değişkenler (eğer kullanırsan)
+.env

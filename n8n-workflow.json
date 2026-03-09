@@ -1,0 +1,82 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test-webhook",
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "89553f64-dcae-4121-a1ba-389aaa28e046",
+      "name": "Webhook",
+      "webhookId": "8f0d8044-ee80-490a-830c-271a26ee446f",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "5W2PLEh8Xn5zFOfz",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://go-app:8080/callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-CALLBACK-TOKEN",
+              "value": "internal-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"n8n_status\": \"success\",\n  \"message\": \"Veri n8n tarafindan basariyla islendi ve Go'ya haber verildi!\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6a2b3209-db26-4320-ac4b-7d4a6ce5b51e",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "80ce4159-4f8a-4f55-b1ef-f6cf4b97b477",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "39534da6096fe97e055161cce3b58fbc00cdebde5b92f9f145bbbfac4fca440a"
+  },
+  "id": "AIZr2CTFxgYeEJS1",
+  "tags": []
+}
