@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Güvenli Mikroservis UI</title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; text-align: center; background-color: #f4f4f9; }
+        .box { background: white; border: 1px solid #ccc; padding: 30px; margin: 20px auto; width: 320px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input, select { display: block; width: 90%; margin: 10px auto; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 96%; font-size: 16px;}
+        button:hover { background: #218838; }
+        .link-btn { background: none; color: #007bff; text-decoration: underline; padding: 0; margin-top: 15px; width: auto; font-size: 14px; box-shadow: none;}
+        .link-btn:hover { background: none; color: #0056b3; }
+        #status { margin-top: 20px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+
+<!-- ----------------------------------------------------------- -->
+                        <!-- LOGİN -->
+<!-- ----------------------------------------------------------- -->
+
+    <h1>🔐 Güvenli Giriş Sistemi</h1>
+
+    <div class="box" id="loginBox">
+        <h3>Giriş Yap</h3>
+        <input type="email" id="loginEmail" placeholder="E-Posta" value="admin@test.com">
+        <input type="password" id="loginPassword" placeholder="Şifre" value="123">
+        <button onclick="login()">Giriş Yap</button>
+        <button class="link-btn" onclick="toggleView('register')">Hesabın yok mu? Kayıt Ol</button>
+    </div>
+
+
+<!-- ----------------------------------------------------------- -->
+                        <!-- REGİSTER -->
+<!-- ----------------------------------------------------------- -->
+
+    <div class="box" id="registerBox" style="display:none;">
+        <h3>Yeni Kayıt</h3>
+        <input type="email" id="regEmail" placeholder="E-Posta">
+        <input type="password" id="regPassword" placeholder="Şifre">
+        <select id="regRole">
+            <option value="admin">Admin (Tam Yetki)</option>
+            <option value="user">Normal Kullanıcı</option>
+        </select>
+        <button onclick="register()" style="background: #007bff;">Kayıt Ol</button>
+        <button class="link-btn" onclick="toggleView('login')">Zaten hesabın var mı? Giriş Yap</button>
+    </div>
+
+ <!-- ----------------------------------------------------------- -->
+                        <!-- Webhook tekileme -->
+ <!-- ----------------------------------------------------------- -->
+    <div class="box" id="adminBox" style="display:none;">
+        <h3>🚀 Admin Paneli</h3>
+        <p>Hoşgeldin, sisteme başarıyla sızdın!</p>
+        <button onclick="triggerN8N()">n8n Webhook Tetikle</button>
+        <button onclick="logout()" style="background: #dc3545; margin-top: 15px;">Çıkış Yap</button>
+    </div>
+
+    <div id="status"></div>
+
+
+
+
+
+    <script>
+        // --- ARAYÜZ GEÇİŞLERİ ---
+        function toggleView(view) {
+            document.getElementById("loginBox").style.display = view === 'login' ? 'block' : 'none';
+            document.getElementById("registerBox").style.display = view === 'register' ? 'block' : 'none';
+            document.getElementById("status").innerText = ""; // Hata mesajlarını temizle
+        }
+
+        // --- 1. KAYIT OL (REGISTER) ---
+        async function register() {
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPassword").value;
+            const role = document.getElementById("regRole").value;
+
+            if (!email || !password) {
+                document.getElementById("status").innerText = "⚠️ Lütfen tüm alanları doldurun!";
+                return;
+            }
+
+            const res = await fetch("/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, role })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("status").innerText = "✅ Kayıt Başarılı! Otomatik giriş yapıldı.";
+                console.log("Sunucudan Gelen Token:", data.token); // Tarayıcı konsoluna (F12) token'ı basar
+                
+                // Arka planda cookie set edildi, direkt panele geç!
+                document.getElementById("registerBox").style.display = "none";
+                document.getElementById("adminBox").style.display = "block";
+            } else {
+                const err = await res.json();
+                document.getElementById("status").innerText = "❌ Hata: " + err.error;
+            }
+        }
+
+        
+
+        // --- 2. GİRİŞ YAP (LOGIN) ---
+        async function login() {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+
+            const res = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (res.ok) {
+                document.getElementById("status").innerText = "✅ Giriş Başarılı!";
+                document.getElementById("loginBox").style.display = "none";
+                document.getElementById("adminBox").style.display = "block";
+            } else {
+                document.getElementById("status").innerText = "❌ Giriş Hatası! Bilgilerinizi kontrol edin.";
+            }
+        }
+
+        // --- 3. n8n TETİKLEME ---
+        async function triggerN8N() {
+            const res = await fetch("/send-to-n8n", { method: "POST" });
+            
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("status").innerText = "🚀 " + data.status;
+            } else {
+                const err = await res.json();
+                document.getElementById("status").innerText = "⛔ Yetki Hatası: " + err.error;
+            }
+        }
+
+        // --- 4. ÇIKIŞ YAP ---
+        function logout() {
+            document.cookie = "jwt_token=; Max-Age=0; path=/;";
+            location.reload();
+        }
+    </script>
+</body>
+</html>
